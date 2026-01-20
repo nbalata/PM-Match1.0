@@ -252,7 +252,9 @@ const App: React.FC = () => {
       setResult(data);
       setStatus(LoadingStatus.SUCCESS);
     } catch (err: any) {
-      console.error(err);
+      console.error("Analysis error:", err);
+      console.error("Error message:", err.message);
+      console.error("Error stack:", err.stack);
       
       // Handle the "Requested entity was not found" error specifically for tool usage
       if (err.message?.includes("Requested entity was not found")) {
@@ -260,7 +262,9 @@ const App: React.FC = () => {
         setError("Your project configuration requires a paid API key for search features. Please select one.");
         await handleOpenKeyDialog();
       } else {
-        setError("Analysis failed. This usually happens if the model response is interrupted or formatted incorrectly. Please try again.");
+        // Show the actual error message for debugging
+        const errorMsg = err.message || err.toString() || "Unknown error";
+        setError(`Analysis failed: ${errorMsg}. Please check the console for more details.`);
       }
       setStatus(LoadingStatus.ERROR);
     }
