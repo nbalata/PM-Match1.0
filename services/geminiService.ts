@@ -5,15 +5,21 @@ import { AnalysisResult, GroundingSource } from "../types";
 export const analyzeJobMatch = async (resume: string, jobDescription: string, jobUrl?: string): Promise<AnalysisResult> => {
   try {
     // Always create a new instance inside the call to ensure the latest API key is used
-    const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    // Check multiple possible env var names (Vite injects process.env at build time)
+    const apiKey = (process.env as any).API_KEY || (process.env as any).GEMINI_API_KEY;
+    
     if (!apiKey) {
-      throw new Error("API key is not configured. Please set GEMINI_API_KEY environment variable.");
+      console.error("API Key check failed. process.env contents:", {
+        hasAPI_KEY: !!(process.env as any).API_KEY,
+        hasGEMINI_API_KEY: !!(process.env as any).GEMINI_API_KEY,
+      });
+      throw new Error("API key is not configured. Please set GEMINI_API_KEY environment variable in Vercel project settings and redeploy.");
     }
 
     const ai = new GoogleGenAI({ apiKey });
     const modelName = "gemini-2.0-flash-exp";
-    
-    let prompt = `
+  
+  let prompt = `
     Analyze this Product Manager application and return the analysis in a strictly formatted JSON block.
     
     RESUME/EXPERIENCE DATA:
@@ -23,13 +29,13 @@ export const analyzeJobMatch = async (resume: string, jobDescription: string, jo
     ${jobDescription || "Text not provided; refer to URL below."}
   `;
 
-    if (jobUrl) {
-      prompt += `\n\nCRITICAL: A direct Job URL was provided: ${jobUrl}. 
-      Use the Google Search tool to:
-      1. Specifically identify the hiring company name (e.g., "PagerDuty", "Stripe", "CrowdStrike") from this URL.
-      2. Confirm the specific role requirements if the JD text is missing.
-      3. Research the company's current product strategy, culture, and recent news.`;
-    }
+  if (jobUrl) {
+    prompt += `\n\nCRITICAL: A direct Job URL was provided: ${jobUrl}. 
+    Use the Google Search tool to:
+    1. Specifically identify the hiring company name (e.g., "PagerDuty", "Stripe", "CrowdStrike") from this URL.
+    2. Confirm the specific role requirements if the JD text is missing.
+    3. Research the company's current product strategy, culture, and recent news.`;
+  }
 
     const systemInstruction = `You are an elite PM Career Coach and Hiring Manager.
       Analyze the match between a candidate's resume and a job description.
@@ -127,8 +133,8 @@ export const analyzeJobMatch = async (resume: string, jobDescription: string, jo
     
     console.log("Extracted text length:", text.length);
     console.log("Extracted text preview:", text.substring(0, 500));
-    
-    // Robust JSON extraction
+  
+  // Robust JSON extraction
     let jsonStr = text.trim();
     
     // Try to extract JSON from markdown code blocks
