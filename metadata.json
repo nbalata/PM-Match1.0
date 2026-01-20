@@ -1,0 +1,5 @@
+{
+  "name": "PM Match",
+  "description": "An AI-powered comparison tool for Product Managers to match their resume against job descriptions, identifying archetypes, red flags, and missing skills.",
+  "requestFramePermissions": []
+}
